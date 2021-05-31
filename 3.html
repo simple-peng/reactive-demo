@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <title>模仿reactive实现原理——实现监听2之改善性能</title>
+
+</head>
+
+<body>
+  <div id="container"></div>
+  <script type="text/javascript">
+    let callbacks = new Map();
+
+    let usedReactivties = [];
+
+    let object = {
+        a: 3,
+        b: 2
+    }
+
+    let object2 = {
+        a: 33,
+        b: 22
+    }
+
+    let po = reactive(object)
+    let po2 = reactive(object2)
+
+    effect(()=>{
+        console.log(po.a)
+    })
+    // effect(()=>{
+    //     console.log(po2.a)
+    // })
+
+    function effect(callback){
+        // callbacks.push(callback)
+        usedReactivties = []
+        callback()
+        // console.log(usedReactivties)
+
+        //收集依赖
+        for(let reactivty of usedReactivties){
+            if(!callbacks.has(reactivty[0])){
+                callbacks.set(reactivty[0],new Map())
+            }
+            if(!callbacks.get(reactivty[0]).has(reactivty[1])){
+                callbacks.get(reactivty[0]).set(reactivty[1],[])
+            }
+            callbacks.get(reactivty[0]).get(reactivty[1]).push(callback)
+        }
+    }
+
+    function reactive(object){
+        return new Proxy(object,{
+            set(obj,prop,val){
+                obj[prop] = val
+                //读取依赖
+                if(callbacks.get(obj)){
+                    if(callbacks.get(obj).get(prop)){
+                        for(let callback of callbacks.get(obj).get(prop)){
+                            callback()
+                        }
+                    }
+                }
+                // for(let callback of callbacks){
+                //     callback()
+                // }
+                // console.log('set',obj,prop,val)
+                return obj[prop]
+            },
+            get(obj,prop){
+                usedReactivties.push([obj,prop])
+                // console.log('get',obj,prop)
+                return obj[prop]
+            }
+        })
+    }
+  </script>
+</body>
+</html>

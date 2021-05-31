@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <title>模仿reactive实现原理——实现监听</title>
+
+</head>
+
+<body>
+  <!-- <div id="color" style="width:100px;height: 100px;"></div>
+  <input id = "r" type = "range" min = 0 max = 255/>
+  <input id = "g" type = "range" min = 0 max = 255/>
+  <input id = "b" type = "range" min = 0 max = 255/> -->
+  <script type="text/javascript">
+   //不考虑性能
+    let callbacks = [];
+
+    // let object = {
+    //     r: 1,
+    //     g: 2,
+    //     b: 3
+    // }
+    let object = {
+        a: 1
+    }
+
+    let object2 = {
+        a: 2
+    }
+
+
+    let po = reactive(object)
+    let po2 = reactive(object2)
+
+    effect(()=>{
+        console.log(po.a)
+        console.log(po2.a)
+    })
+    // effect(()=>{
+    //     document.getElementById("r").value = po.r
+    //     console.log('effect1')
+    // })
+    // effect(()=>{
+    //     document.getElementById("g").value = po.g
+    //     console.log('effect2')
+    // })
+    // effect(()=>{
+    //     document.getElementById("b").value = po.b
+    //     console.log('effect3')
+    // })
+
+    // effect(()=>{
+    //     document.getElementById("color").style.backgroundColor = `rgb(${po.r},${po.g},${po.b})`
+    //     console.log('effect4')
+    // })
+
+    // document.getElementById("r").addEventListener("input",event=>{
+    //     po.r = event.target.value
+    // })
+    // document.getElementById("g").addEventListener("input",event=>{
+    //     po.g = event.target.value
+    // })
+    // document.getElementById("b").addEventListener("input",event=>{
+    //     po.b = event.target.value
+    // })
+
+    function effect(callback){
+        callbacks.push(callback)
+        console.log("effect",callbacks)
+    }
+
+    function reactive(object){
+        return new Proxy(object,{
+            set(obj,prop,val){
+                obj[prop] = val
+                for(let callback of callbacks){
+                    callback()
+                }
+                console.log('set',obj,prop,val)
+                return obj[prop]
+            },
+            get(obj,prop){
+                console.log('get',obj,prop)
+                return obj[prop]
+            }
+        })
+    }
+  </script>
+</body>
+</html>
